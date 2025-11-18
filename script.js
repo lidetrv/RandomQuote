@@ -11,7 +11,96 @@ const quoteCountElement = document.getElementById('quote-count');
 
 let quoteCount = 0;
 
-// This function fetches a quote from the Quotable API
+// Your API Ninjas key
+const API_NINJAS_KEY = 'eKXOgAJVqBFi1Dl1p79AWQ==1hUCmgR3R92Eiv4X';
+
+// Fallback quotes in case API fails
+const fallbackQuotes = [
+    {
+        content: "The only way to do great work is to love what you do.",
+        author: "Steve Jobs"
+    },
+    {
+        content: "Innovation distinguishes between a leader and a follower.",
+        author: "Steve Jobs"
+    },
+    {
+        content: "Your time is limited, so don't waste it living someone else's life.",
+        author: "Steve Jobs"
+    },
+    {
+        content: "The future belongs to those who believe in the beauty of their dreams.",
+        author: "Eleanor Roosevelt"
+    },
+    {
+        content: "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+        author: "Winston Churchill"
+    },
+    {
+        content: "The way to get started is to quit talking and begin doing.",
+        author: "Walt Disney"
+    },
+    {
+        content: "Life is what happens to you while you're busy making other plans.",
+        author: "John Lennon"
+    },
+    {
+        content: "The only impossible journey is the one you never begin.",
+        author: "Tony Robbins"
+    }
+];
+
+// Function to get quote from API Ninjas
+async function getApiNinjasQuote() {
+    try {
+        const response = await fetch('https://api.api-ninjas.com/v1/quotes', {
+            method: 'GET',
+            headers: {
+                'X-Api-Key': API_NINJAS_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // Check if the request was successful
+        if (!response.ok) {
+            throw new Error(`API Ninjas error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // API Ninjas returns an array with one quote object
+        if (Array.isArray(data) && data.length > 0) {
+            return {
+                content: data[0].quote,
+                author: data[0].author,
+                category: data[0].category
+            };
+        } else {
+            throw new Error('Invalid response from API Ninjas');
+        }
+
+    } catch (error) {
+        console.error('API Ninjas failed:', error);
+        throw error;
+    }
+}
+
+// Function to get random quote from Type.fit API (fallback)
+async function getTypeFitQuote() {
+    try {
+        const response = await fetch('https://type.fit/api/quotes');
+        const quotes = await response.json();
+        const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+        return {
+            content: randomQuote.text,
+            author: randomQuote.author || 'Unknown'
+        };
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Main function to fetch quotes
 async function generateQuote() {
     // Show loading state
     quoteText.textContent = "Fetching an inspiring quote...";
@@ -20,70 +109,111 @@ async function generateQuote() {
     btnText.textContent = 'Loading...';
     newQuoteBtn.disabled = true;
 
-    // The API endpoint for a random quote
-    const apiUrl = 'https://api.quotable.io/random';
+    let quoteData = null;
+    let apiUsed = 'fallback';
 
-    try {
-        // 1. Fetch the data from the API
-        const response = await fetch(apiUrl);
+    // Try APIs in order of preference
+    const methods = [
+        { name: 'API Ninjas', func: getApiNinjasQuote },
+        { name: 'Type.fit', func: getTypeFitQuote }
+    ];
 
-        // Check if the request was successful
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+    for (const method of methods) {
+        try {
+            console.log(`Trying ${method.name} API...`);
+            const data = await method.func();
+            
+            if (data && data.content && data.author) {
+                quoteData = data;
+                apiUsed = method.name;
+                console.log(`Success with ${method.name}`);
+                break;
+            }
+        } catch (error) {
+            console.warn(`${method.name} failed:`, error);
+            continue;
         }
-
-        // 2. Parse the JSON response
-        const data = await response.json(); 
-        
-        // 3. The Quotable API returns a single object where:
-        //    'content' is the quote text
-        //    'author' is the author name
-
-        // 4. Update the content of the HTML elements
-        quoteText.textContent = data.content;
-        quoteAuthor.textContent = `— ${data.author}`;
-        
-        // Increment and update quote counter
-        quoteCount++;
-        quoteCountElement.textContent = quoteCount;
-
-    } catch (error) {
-        // Handle any errors (network issues, API server down, etc.)
-        console.error("Error fetching quote:", error);
-        quoteText.textContent = "Error: Could not load quote. Please check your connection.";
-        quoteAuthor.textContent = "";
-    } finally {
-        // Reset button state
-        loadingSpinner.style.display = 'none';
-        btnText.textContent = 'New Quote';
-        newQuoteBtn.disabled = false;
     }
+
+    // If all APIs failed, use fallback
+    if (!quoteData) {
+        console.log('All APIs failed, using fallback');
+        const randomIndex = Math.floor(Math.random() * fallbackQuotes.length);
+        quoteData = fallbackQuotes[randomIndex];
+        apiUsed = 'fallback';
+    }
+
+    // Update the display
+    quoteText.textContent = `"${quoteData.content}"`;
+    quoteAuthor.textContent = `— ${quoteData.author}`;
+    
+    // Show API source in console (optional visual indicator)
+    if (apiUsed === 'API Ninjas') {
+        quoteText.style.color = '#2c5aa0'; // Different color for premium API
+    } else {
+        quoteText.style.color = ''; // Reset to default
+    }
+
+    console.log(`Quote from: ${apiUsed}`);
+
+    // Increment and update quote counter
+    quoteCount++;
+    quoteCountElement.textContent = quoteCount;
+
+    // Reset button state
+    loadingSpinner.style.display = 'none';
+    btnText.textContent = 'New Quote';
+    newQuoteBtn.disabled = false;
 }
 
 // Copy quote to clipboard
 function copyQuoteToClipboard() {
     const quote = `${quoteText.textContent} ${quoteAuthor.textContent}`;
     
+    if (!navigator.clipboard) {
+        fallbackCopyToClipboard(quote);
+        return;
+    }
+    
     navigator.clipboard.writeText(quote)
         .then(() => {
-            // Show notification
-            notification.textContent = "Quote copied to clipboard!";
-            notification.classList.add('show');
-            
-            // Hide notification after 3 seconds
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+            showNotification("Quote copied to clipboard!");
         })
         .catch(err => {
             console.error('Failed to copy: ', err);
-            notification.textContent = "Failed to copy quote!";
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+            fallbackCopyToClipboard(quote);
         });
+}
+
+// Fallback copy method
+function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showNotification("Quote copied to clipboard!");
+        } else {
+            showNotification("Failed to copy quote!");
+        }
+    } catch (err) {
+        console.error('Fallback copy failed: ', err);
+        showNotification("Failed to copy quote!");
+    }
+    document.body.removeChild(textArea);
+}
+
+// Show notification
+function showNotification(message) {
+    notification.textContent = message;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
 }
 
 // Tweet the current quote
@@ -93,10 +223,13 @@ function tweetQuote() {
     window.open(twitterUrl, '_blank');
 }
 
-// Add event listeners to the buttons
+// Add event listeners
 newQuoteBtn.addEventListener('click', generateQuote);
 copyQuoteBtn.addEventListener('click', copyQuoteToClipboard);
 tweetQuoteBtn.addEventListener('click', tweetQuote);
 
-// Display the first quote when the page loads
-generateQuote();
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Quote Generator initialized with API Ninjas');
+    generateQuote();
+});
