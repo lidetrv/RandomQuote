@@ -1,60 +1,214 @@
+:root {
+    --primary-color: #4a6fa5;
+    --secondary-color: #6b8cbc;
+    --accent-color: #ff7e5f;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --text-color: #333;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    margin: 0;
-    background-color: #f4f4f9;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+    color: var(--text-color);
 }
 
 .container {
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
     text-align: center;
-    max-width: 500px;
-    width: 90%;
+    max-width: 600px;
+    width: 100%;
+    transition: var(--transition);
 }
 
 h1 {
-    color: #333;
-    margin-bottom: 25px;
+    color: var(--primary-color);
+    margin-bottom: 30px;
+    font-size: 2.2rem;
+    position: relative;
+    display: inline-block;
+}
+
+h1:after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background-color: var(--accent-color);
+    border-radius: 2px;
 }
 
 #quote-box {
-    margin: 20px 0;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #fff;
+    margin: 30px 0;
+    padding: 30px;
+    border-radius: 12px;
+    background-color: var(--light-color);
+    position: relative;
+    transition: var(--transition);
+}
+
+#quote-box:before {
+    content: '"';
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    font-size: 60px;
+    color: var(--secondary-color);
+    opacity: 0.3;
+    font-family: Georgia, serif;
 }
 
 #quote-text {
-    font-size: 1.5em;
+    font-size: 1.5rem;
     font-style: italic;
-    color: #555;
-    margin-bottom: 15px;
+    color: var(--dark-color);
+    margin-bottom: 20px;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
 }
 
 #quote-author {
-    font-size: 1.1em;
-    color: #777;
+    font-size: 1.2rem;
+    color: var(--primary-color);
     text-align: right;
+    font-weight: 600;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 #new-quote-btn {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s;
+    background-color: var(--accent-color);
 }
 
 #new-quote-btn:hover {
-    background-color: #0056b3;
+    background-color: #ff6b4a;
+}
+
+#copy-quote-btn {
+    background-color: #6c757d;
+}
+
+#copy-quote-btn:hover {
+    background-color: #5a6268;
+}
+
+#tweet-quote-btn {
+    background-color: #1da1f2;
+}
+
+#tweet-quote-btn:hover {
+    background-color: #0d8bd9;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    background-color: #28a745;
+    color: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    transform: translateX(150%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.quote-counter {
+    margin-top: 20px;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 25px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    #quote-text {
+        font-size: 1.3rem;
+    }
+    
+    .buttons {
+        flex-direction: column;
+    }
+    
+    button {
+        width: 100%;
+    }
 }
